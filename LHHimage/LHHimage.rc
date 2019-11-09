@@ -303,6 +303,7 @@ BEGIN
         END
         MENUITEM "creat hisgraph",              ID_VIEW_CREATHISGRAPH
         MENUITEM "image smooth",                ID_VIEW_IMAGESMOOTH
+        MENUITEM "creatt hisgraph2",            ID_VIEW_CREATTHISGRAPH2
     END
     POPUP "&Window"
     BEGIN

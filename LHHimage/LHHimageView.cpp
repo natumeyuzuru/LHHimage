@@ -15,7 +15,7 @@
 #include"MainFrm.h"
 #include "CHistogramDisplay.h"
 #include"smoothDlg.h"
-
+#include<time.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -39,6 +39,7 @@ ON_WM_MOUSEMOVE()
 ON_COMMAND(ID_IMAGELINECHANGES_ONELINE, &CLHHimageView::ontran)
 ON_COMMAND(ID_VIEW_CREATHISGRAPH, &CLHHimageView::OnViewCreathisgraph)
 ON_COMMAND(ID_VIEW_IMAGESMOOTH, &CLHHimageView::OnViewImagesmooth)
+ON_COMMAND(ID_VIEW_CREATTHISGRAPH2, &CLHHimageView::OnViewCreatthisgraph2)
 END_MESSAGE_MAP()
 
 // CLHHimageView construction/destruction
@@ -657,3 +658,85 @@ void CLHHimageView::OnViewImagesmooth()
 }
 	
 
+
+
+void CLHHimageView::OnViewCreatthisgraph2()
+{
+	// TODO: Add your command handler code here
+	CLHHimageDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	
+	system("color 2F");
+
+	
+	imshow("素材图", pDoc->image);
+	if (!pDoc->image.data) {
+		printf("图像读取失败!");
+		
+	}
+
+	int bins = 256;
+	int hist_size[] = { bins };
+	float range[] = { 0,256 };
+	const float* ranges[] = { range };
+	MatND redHist, greenHist, blueHist;
+	int channels_r[] = { 0 };
+
+	//进行直方图的计算（红色分量部分）
+	calcHist(&pDoc->image, 1, channels_r, Mat(),	//不使用掩膜
+		redHist, 1, hist_size, ranges, true, false);
+
+	//进行直方图计算（绿色分量部分）
+	int channels_g[] = { 1 };
+	calcHist(&pDoc->image, 1, channels_g, Mat(),
+		greenHist, 1, hist_size, ranges, true, false);
+
+	//进行直方图计算（蓝色分量部分）
+	int channels_b[] = { 2 };
+	calcHist(&pDoc->image, 1, channels_b, Mat(),
+		blueHist, 1, hist_size, ranges, true, false);
+
+	//准备参数绘制三色直方图
+	double maxValue_red, maxValue_green, maxValue_blue;
+	minMaxLoc(redHist, 0, &maxValue_red, 0, 0);
+	minMaxLoc(greenHist, 0, &maxValue_green, 0, 0);
+	minMaxLoc(blueHist, 0, &maxValue_blue, 0, 0);
+	int scale = 1;
+	int histHeight = 256;
+	//bins * 3 是因为要绘制三个通道,每个通道的像素取值在 0-bins
+	Mat histImage = Mat::zeros(histHeight, bins * 3, CV_8UC3);
+
+	//开始绘制
+	for (int i = 0; i < bins; i++) {
+		float binValue_red = redHist.at<float>(i);
+		float binValue_green = greenHist.at<float>(i);
+		float binValue_blue = blueHist.at<float>(i);
+
+		//计算高度时的乘除与下面绘图的 histHeight - intensity 是为了便于显示，否则有的色度很低
+		//要绘制的高度
+		int intensity_red = cvRound(binValue_red * histHeight / maxValue_red);
+		int intensity_green = cvRound(binValue_green * histHeight / maxValue_green);
+		int intensity_blue = cvRound(binValue_blue * histHeight / maxValue_blue);
+		//绘制红色分量直方图
+		rectangle(histImage, Point(i * scale, histHeight - 1),
+			Point((i + 1) * scale - 1, histHeight - intensity_red),
+			Scalar(255, 0, 0));
+
+		//绘制绿色分量直方图
+		rectangle(histImage, Point((i + bins) * scale, histHeight - 1),
+			Point((i + bins + 1) * scale - 1, histHeight - intensity_green),
+			Scalar(0, 255, 0));
+
+		//绘制分量直方图
+		rectangle(histImage, Point((i + bins * 2) * scale, histHeight - 1),
+			Point((i + bins * 2 + 1) * scale - 1, histHeight - intensity_blue),
+			Scalar(0, 0, 255));
+	}
+
+	imshow("图像的 RGB 直方图", histImage);
+
+	waitKey(0);
+	
+	
+}

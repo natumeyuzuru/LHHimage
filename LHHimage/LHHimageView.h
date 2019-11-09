@@ -65,6 +65,7 @@ public:
 	afx_msg void ontran();
 	afx_msg void OnViewCreathisgraph();
 	afx_msg void OnViewImagesmooth();
+	afx_msg void OnViewCreatthisgraph2();
 };
 
 #ifndef _DEBUG  // debug version in LHHimageView.cpp
